@@ -5,9 +5,18 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "dagster>=1.13.29",
+    "dagster-webserver>=1.13.29",
+    "dbt-postgres>=1.11.0",
+    "dlt[postgres]>=1.32.0",
+    "fastapi>=0.162.0",
     "ipykernel>=7.4.0",
     "openpyxl>=3.1.5",
     "pandas>=3.1.0",
+    "psycopg[binary]>=3.3.8",
+    "python-dotenv>=1.2.4",
+    "sqlalchemy>=2.1.8",
     "statsmodels>=0.15.0",
+    "uvicorn[standard]>=0.54.0",
     "wildboottest>=0.3.2",
 ]

@@ -1,0 +1,58 @@
+version: 2
+
+models:
+
+  - name: dim_crops
+    columns:
+      - name: crop_key
+        data_tests:
+          - unique
+          - not_null
+
+      - name: crop_name
+        data_tests:
+          - not_null
+
+  - name: dim_counties
+    columns:
+      - name: county_key
+        data_tests:
+          - unique
+          - not_null
+
+      - name: county_code
+        data_tests:
+          - not_null
+
+  - name: dim_years
+    columns:
+      - name: year_key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fact_crop_yield
+    columns:
+      - name: crop_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_crops')
+                field: crop_key
+
+      - name: county_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_counties')
+                field: county_key
+
+      - name: year_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_years')
+                field: year_key

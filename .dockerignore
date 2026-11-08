@@ -1,0 +1,51 @@
+
+# Git
+.git/
+.gitignore
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Python tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Dagster local state
+.dagster/
+dagster_home/
+.tmp_dagster_home*/
+
+# dlt local state
+.dlt/
+
+# dbt generated files
+**/target/
+**/dbt_packages/
+**/logs/
+
+# Logs
+*.log
+
+# Development-only material
+explorations/
+datamodeling/
+show_structure.sh
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
