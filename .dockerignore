@@ -1,0 +1,8 @@
+.venv
+.git
+.terraform
+*.tfstate*
+*.tfvars
+.env
+explorations
+__pycache__
