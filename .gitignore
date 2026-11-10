@@ -1,16 +1,17 @@
+# Git
+.git/
 
 # Environment variables and secrets
 .env
 .env.*
 !.env.example
 
-# Python environments
+# Python environments and caches
 .venv/
 venv/
 __pycache__/
 *.py[cod]
 *.egg-info/
-.python_history
 
 # Python tooling
 .pytest_cache/
@@ -35,14 +36,16 @@ dagster_home/
 **/dbt_packages/
 **/logs/
 
-# General logs
+# Logs
 *.log
+
+# Development-only material
+explorations/
+datamodeling/
+show_structure.sh
 
 # IDE and operating system
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
-
-# Local development helpers
-show_structure.sh

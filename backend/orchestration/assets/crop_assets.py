@@ -10,7 +10,7 @@ from backend.transformations.clean_crops import main as clean_crops
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DBT_PROJECT_DIR = PROJECT_ROOT / "crop_analytics_dbt"
+DBT_PROJECT_DIR = PROJECT_ROOT / "backend" / "dbt"
 
 
 @asset

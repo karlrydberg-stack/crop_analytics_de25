@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 # Project paths
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CSV_PATH = PROJECT_ROOT / "data" / "crop_data_1965_2025.csv"
+CSV_PATH = PROJECT_ROOT / "backend" / "data" / "crop_data_1965_2025.csv"
 
 # Load environment variables
 load_dotenv(PROJECT_ROOT / ".env")

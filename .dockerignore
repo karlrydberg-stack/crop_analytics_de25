@@ -1,5 +1,4 @@
-
-# Git
+# Git metadata
 .git/
 .gitignore
 
@@ -8,12 +7,13 @@
 .env.*
 !.env.example
 
-# Python environments and caches
+# Python environments
 .venv/
 venv/
 __pycache__/
 *.py[cod]
 *.egg-info/
+.python_history
 
 # Python tooling
 .pytest_cache/
@@ -21,6 +21,9 @@ __pycache__/
 .ruff_cache/
 .coverage
 htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
 
 # Dagster local state
 .dagster/
@@ -38,14 +41,13 @@ dagster_home/
 # Logs
 *.log
 
-# Development-only material
-explorations/
-datamodeling/
-show_structure.sh
-
 # IDE and operating system
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
-.ipynb_checkpoints/
+
+# Development-only material
+explorations/
+datamodeling/
+show_structure.sh
