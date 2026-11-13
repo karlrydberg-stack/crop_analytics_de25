@@ -1,4 +1,4 @@
-# --- Tips! This will print the output of the (public )Azure portal URLs ---
+# --- Tips! This will print the output of the (public) Azure portal URLs ---
 # source: https://build5nines.com/output-link-to-azure-resources-from-terraform-project/
 
 output "backend_url" {

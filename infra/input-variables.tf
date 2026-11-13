@@ -10,6 +10,13 @@ variable "location" {
 }
 
 # --- For postgress ---
+
+variable "postgres_location" {
+  type    = string
+  default = "norwayeast"
+}
+
+
 variable "db_admin_user" {
   type    = string
   default = "cropadmin"

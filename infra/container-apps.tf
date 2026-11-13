@@ -1,6 +1,6 @@
 # --- Logs storage, required by the Container Apps environment | Require by Azure, in the portal it is: "Logs" ---
 resource "azurerm_log_analytics_workspace" "logs" {
-  name                = "jord-logs"
+  name                = "logs-crop"
   resource_group_name = azurerm_resource_group.rg.name
   location            = var.location
   sku                 = "PerGB2018"
@@ -9,7 +9,7 @@ resource "azurerm_log_analytics_workspace" "logs" {
 
 # --- The shared "building" both apps live in | In the Azure portal it is: “Container Apps Environment”.
 resource "azurerm_container_app_environment" "env" {
-  name                       = "jord-env"
+  name                       = "ContainerAppsEnv"
   resource_group_name        = azurerm_resource_group.rg.name
   location                   = var.location
   logs_destination           = "log-analytics"
@@ -17,9 +17,9 @@ resource "azurerm_container_app_environment" "env" {
 }
 
 
-# --- Backend (FastAPI) container app ---
+# --- Backend container app ---
 resource "azurerm_container_app" "backend" {
-  name                         = "jord-backend" # check name with Kalle if used anything else 
+  name                         = "backend"
   container_app_environment_id = azurerm_container_app_environment.env.id
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single" # Only one version runs. A new deploy replaces the old one
@@ -76,7 +76,7 @@ resource "azurerm_container_app" "backend" {
 
 # --- Frontend (Streamlit) container app | See above comments as they are similar ---
 resource "azurerm_container_app" "frontend" {
-  name                         = "jord-frontend"
+  name                         = "frontend"
   container_app_environment_id = azurerm_container_app_environment.env.id
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single"

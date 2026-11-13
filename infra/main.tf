@@ -26,7 +26,7 @@ provider "azurerm" {
 
 # --- Create a resource group
 resource "azurerm_resource_group" "rg" {
-  name     = "jord-rg"
+  name     = "rg-crop-analytics"
   location = var.location
 }
 
