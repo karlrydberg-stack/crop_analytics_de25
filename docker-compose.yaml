@@ -1,0 +1,74 @@
+
+services:
+  db:
+    image: postgres:17
+    container_name: local_postgres
+    profiles: ["local-db"]
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+
+    container_name: crop_backend
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_HOST: ${DOCKER_POSTGRES_HOST:-db}
+      POSTGRES_PORT: ${DOCKER_POSTGRES_PORT:-5432}
+      POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-prefer}
+      DAGSTER_HOME: /opt/dagster/dagster_home
+      DBT_PROFILES_DIR: /app/backend/docker/dbt
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - dagster_home:/opt/dagster/dagster_home
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+
+    container_name: crop_frontend
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_HOST: ${DOCKER_POSTGRES_HOST:-db}
+      POSTGRES_PORT: ${DOCKER_POSTGRES_PORT:-5432}
+      POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-prefer}
+
+    ports:
+      - "8501:8501"
+
+volumes:
+  postgres_data:
+  dagster_home:
+
+
+
