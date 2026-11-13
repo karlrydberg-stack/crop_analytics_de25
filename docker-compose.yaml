@@ -2,7 +2,7 @@
 services:
   db:
     image: postgres:17
-    container_name: local_postgres
+    container_name: crop_db
     profiles: ["local-db"]
     restart: unless-stopped
 

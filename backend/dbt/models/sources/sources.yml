@@ -2,7 +2,6 @@ version: 2
 
 sources:
   - name: cleaned_data
-    database: crop_db
     schema: cleaned
 
     tables:

@@ -1,4 +1,4 @@
-
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -11,6 +11,7 @@ from backend.transformations.clean_crops import main as clean_crops
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DBT_PROJECT_DIR = PROJECT_ROOT / "backend" / "dbt"
+DBT_PROFILES_DIR = PROJECT_ROOT / "backend" / "docker" / "dbt"
 
 
 @asset
@@ -47,11 +48,16 @@ def run_dbt_command(context, command):
             "Make sure dbt is installed in the active environment."
         )
 
+    # Tell dbt where profiles.yml is, unless it's already set (Docker sets it)
+    env = os.environ.copy()
+    env.setdefault("DBT_PROFILES_DIR", str(DBT_PROFILES_DIR))
+
     result = subprocess.run(
         [dbt_executable, *command],
         cwd=DBT_PROJECT_DIR,
         capture_output=True,
-        text=True
+        text=True,
+        env=env,
     )
 
     if result.stdout:
