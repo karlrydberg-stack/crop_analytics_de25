@@ -1,4 +1,4 @@
-# --- Logs storage, required by the Container Apps environment | Require by Azure, in the portal it is: "Logs" ---
+# --- Logs storage, required by the Container Apps environment ---
 resource "azurerm_log_analytics_workspace" "logs" {
   name                = "logs-crop"
   resource_group_name = azurerm_resource_group.rg.name
@@ -7,74 +7,94 @@ resource "azurerm_log_analytics_workspace" "logs" {
   retention_in_days   = 30
 }
 
-# --- The shared "building" both apps live in | In the Azure portal it is: “Container Apps Environment”.
+# --- The shared space the job and the frontend run in ---
 resource "azurerm_container_app_environment" "env" {
   name                       = "ContainerAppsEnv"
   resource_group_name        = azurerm_resource_group.rg.name
   location                   = var.location
   logs_destination           = "log-analytics"
   log_analytics_workspace_id = azurerm_log_analytics_workspace.logs.id
+
+  workload_profile {
+    name                  = "Consumption"
+    workload_profile_type = "Consumption"
+  }
 }
 
+# --- Values both containers need to reach Postgres ---
+locals {
+  pg_host = azurerm_postgresql_flexible_server.pg.fqdn
+  pg_db   = azurerm_postgresql_flexible_server_database.db.name
+}
 
-# --- Backend container app ---
-resource "azurerm_container_app" "backend" {
-  name                         = "backend"
-  container_app_environment_id = azurerm_container_app_environment.env.id
+# --- Pipeline: Dagster runs once (CSV -> staging -> cleaned -> dbt build), then stops ---
+resource "azurerm_container_app_job" "pipeline" {
+  name                         = "pipeline-dagster"
+  location                     = var.location
   resource_group_name          = azurerm_resource_group.rg.name
-  revision_mode                = "Single" # Only one version runs. A new deploy replaces the old one
+  container_app_environment_id = azurerm_container_app_environment.env.id
+  replica_timeout_in_seconds   = 1800 # stop after 30 minutes at most
+  replica_retry_limit          = 0
 
-  # --- Storing passwords (ACR password, database URL) ---
+  # Started by hand: az containerapp job start
+  manual_trigger_config {
+    parallelism              = 1
+    replica_completion_count = 1
+  }
+
   secret {
     name  = "acr-password"
     value = azurerm_container_registry.acr.admin_password
   }
   secret {
-    name  = "database-url"
-    value = local.database_url
+    name  = "db-admin-password"
+    value = var.db_admin_password
   }
 
-  # --- How to log to get in ACR to get the image ---
   registry {
     server               = azurerm_container_registry.acr.login_server
     username             = azurerm_container_registry.acr.admin_username
     password_secret_name = "acr-password"
   }
 
-  # --- Gives the app a public URL ---
-  ingress {
-    external_enabled = true
-    target_port      = 8000
-    # --- All visitors go to the newest version ---
-    traffic_weight {
-      latest_revision = true
-      percentage      = 100
-    }
-  }
-
-  # --- Shuts down when nobody uses it ---
   template {
-    min_replicas = 0
-    max_replicas = 1
-
-    # --- Which image to run from ACR ---
     container {
-      name  = "backend"
-      image = "${azurerm_container_registry.acr.login_server}/backend:${var.image_tag}"
-      # --- How much power the app gets ---
-      cpu    = 0.25
-      memory = "0.5Gi"
+      name   = "pipeline"
+      image  = "${azurerm_container_registry.acr.login_server}/backend:${var.backend_image_tag}"
+      cpu    = 1.0
+      memory = "2Gi"
+      command = ["uv", "run", "--no-sync", "dagster", "asset", "materialize",
+      "--select", "*", "-m", "backend.orchestration.definitions"]
 
-      # --- Environment variables: DATABASE_URL for the backend, BACKEND_URL for the frontend ---
       env {
-        name        = "DATABASE_URL"
-        secret_name = "database-url"
+        name  = "POSTGRES_HOST"
+        value = local.pg_host
+      }
+      env {
+        name  = "POSTGRES_PORT"
+        value = "5432"
+      }
+      env {
+        name  = "POSTGRES_DB"
+        value = local.pg_db
+      }
+      env {
+        name  = "POSTGRES_USER"
+        value = var.db_admin_user
+      }
+      env {
+        name        = "POSTGRES_PASSWORD"
+        secret_name = "db-admin-password"
+      }
+      env {
+        name  = "POSTGRES_SSLMODE"
+        value = "require"
       }
     }
   }
 }
 
-# --- Frontend (Streamlit) container app | See above comments as they are similar ---
+# --- Frontend: Streamlit reads the warehouse as a read-only user ---
 resource "azurerm_container_app" "frontend" {
   name                         = "frontend"
   container_app_environment_id = azurerm_container_app_environment.env.id
@@ -84,6 +104,14 @@ resource "azurerm_container_app" "frontend" {
   secret {
     name  = "acr-password"
     value = azurerm_container_registry.acr.admin_password
+  }
+  secret {
+    name  = "streamlit_reader-password"
+    value = var.streamlit_reader_password
+  }
+  secret {
+    name  = "chatbot-reader-password"
+    value = var.chatbot_reader_password
   }
 
   registry {
@@ -107,13 +135,41 @@ resource "azurerm_container_app" "frontend" {
 
     container {
       name   = "frontend"
-      image  = "${azurerm_container_registry.acr.login_server}/frontend:${var.image_tag}"
-      cpu    = 0.25
-      memory = "0.5Gi"
+      image  = "${azurerm_container_registry.acr.login_server}/frontend:${var.frontend_image_tag}"
+      cpu    = 0.5
+      memory = "1Gi"
 
       env {
-        name  = "BACKEND_URL"
-        value = "https://${azurerm_container_app.backend.ingress[0].fqdn}"
+        name  = "POSTGRES_HOST"
+        value = local.pg_host
+      }
+      env {
+        name  = "POSTGRES_PORT"
+        value = "5432"
+      }
+      env {
+        name  = "POSTGRES_DB"
+        value = local.pg_db
+      }
+      env {
+        name  = "POSTGRES_USER"
+        value = "app_reader"
+      }
+      env {
+        name        = "POSTGRES_PASSWORD"
+        secret_name = "streamlit_reader-password"
+      }
+      env {
+        name  = "POSTGRES_SSLMODE"
+        value = "require"
+      }
+      env {
+        name  = "CHATBOT_DB_USER"
+        value = "chatbot_reader"
+      }
+      env {
+        name        = "CHATBOT_DB_PASSWORD"
+        secret_name = "chatbot-reader-password"
       }
     }
   }

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from dagster import asset
 
+from backend.setup_db import setup_db
 from backend.ingestion.pipeline import run_pipeline
 from backend.transformations.clean_crops import main as clean_crops
 
@@ -13,9 +14,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DBT_PROJECT_DIR = PROJECT_ROOT / "backend" / "dbt"
 DBT_PROFILES_DIR = PROJECT_ROOT / "backend" / "docker" / "dbt"
 
+@asset
+def database_setup(context):
+    """Create schemas and the read-only users (safe to repeat)."""
+    setup_db()
+    context.log.info("Database setup completed.")
 
 @asset
-def raw_crops(context):
+def raw_crops(context, database_setup):
     """Ingest the source CSV into PostgreSQL staging."""
 
     context.log.info("Starting dlt ingestion.")
@@ -77,7 +83,7 @@ def run_dbt_command(context, command):
 def warehouse_models(context, cleaned_crops):
     """Build the dbt warehouse models."""
 
-    context.log.info("Starting dbt run.")
+    context.log.info("Starting dbt build.")
 
     run_dbt_command(context, ["build"])
 

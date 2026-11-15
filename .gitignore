@@ -268,3 +268,5 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 backend/docker/dbt/.user.yml
+
+.tmp_dagster_home*/

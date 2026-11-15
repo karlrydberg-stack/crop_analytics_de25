@@ -7,7 +7,7 @@ resource "azurerm_postgresql_flexible_server" "pg" {
   administrator_login           = var.db_admin_user
   administrator_password        = var.db_admin_password
   sku_name                      = "B_Standard_B1ms"
-  storage_mb                    = 32768 
+  storage_mb                    = 32768
   public_network_access_enabled = true
 
   lifecycle {
@@ -16,7 +16,7 @@ resource "azurerm_postgresql_flexible_server" "pg" {
 }
 
 resource "azurerm_postgresql_flexible_server_database" "db" {
-  name      = "crop_db"
+  name      = "crops"
   server_id = azurerm_postgresql_flexible_server.pg.id
   charset   = "UTF8" # To include Swedish letters: å, ä, ö stored correctly
   collation = "en_US.utf8"
@@ -31,8 +31,5 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure" {
 }
 
 
-# --- The connection string the backend will use ---
-locals {
-  database_url = "postgresql+psycopg://${var.db_admin_user}:${urlencode(var.db_admin_password)}@${azurerm_postgresql_flexible_server.pg.fqdn}:5432/${azurerm_postgresql_flexible_server_database.db.name}?sslmode=require"
-}
+
 

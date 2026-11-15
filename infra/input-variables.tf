@@ -27,10 +27,25 @@ variable "db_admin_password" {
   sensitive = true # hidden in Terraform's output
 }
 
-# --- Image ---
-variable "image_tag" {
+# --- Images ---
+variable "backend_image_tag" {
   type    = string
   default = "v1"
-
 }
 
+variable "frontend_image_tag" {
+  type    = string
+  default = "v1"
+}
+
+# --- Read-only database users ---
+variable "streamlit_reader_password" {
+  type      = string
+  sensitive = true
+}
+
+# --- If we have the time ---
+variable "chatbot_reader_password" {
+  type      = string
+  sensitive = true
+}
