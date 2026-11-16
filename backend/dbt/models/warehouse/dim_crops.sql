@@ -8,7 +8,10 @@ WITH unique_crops AS (
 )
 
 SELECT
-    MD5(crop_name) AS crop_key,
-    crop_name
+    MD5(u.crop_name) AS crop_key,
+    u.crop_name,
+    g.crop_group
 
-FROM unique_crops
+FROM unique_crops AS u
+LEFT JOIN {{ ref('crop_groups') }} AS g
+    ON u.crop_name = g.crop_name

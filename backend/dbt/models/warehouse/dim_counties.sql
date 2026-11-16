@@ -9,13 +9,17 @@ WITH unique_counties AS (
 )
 
 SELECT
-    MD5(county_code) AS county_key,
-    county_code,
-    county_name,
+    MD5(u.county_code) AS county_key,
+    u.county_code,
+    u.county_name,
 
     CASE
-        WHEN county_code = '00' THEN 'national'
+        WHEN u.county_code = '00' THEN 'national'
         ELSE 'county'
-    END AS geography_type
+    END AS geography_type,
 
-FROM unique_counties
+    r.region
+
+FROM unique_counties AS u
+LEFT JOIN {{ ref('county_regions') }} AS r
+    ON u.county_name = r.county_name

@@ -13,12 +13,22 @@ models:
         data_tests:
           - not_null
 
+      - name: crop_group
+        data_tests:
+          - not_null
+
   - name: dim_counties
     columns:
       - name: county_key
         data_tests:
           - unique
           - not_null
+
+      - name: region
+        data_tests:
+         - not_null:
+            config:
+              where: "geography_type = 'county'"
 
       - name: county_code
         data_tests:
