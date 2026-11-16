@@ -1,19 +1,58 @@
-# uv run streamlit run frontend/dashboard.py
+# # uv run --env-file .env streamlit run frontend/dashboard.py
 
 import os
+
 import pandas as pd
-import requests
-import streamlit as st
 import plotly.express as px
+import streamlit as st
+from sqlalchemy import URL, create_engine, text
+
+# --- Rebuilt from the star schema, + region and crop_group from the dbt seeds.
+CROPS_QUERY = """
+select
+    c.county_code,
+    c.county_name   as "Län",
+    c.geography_type,
+    c.region,
+    cr.crop_name    as "Gröda",
+    cr.crop_group,
+    y.year          as "År",
+    f.area_ha,
+    f.harvest_ton,
+    f.yield_ton_ha
+from warehouse.fact_crop_yield as f
+join warehouse.dim_counties as c  on f.county_key = c.county_key
+join warehouse.dim_crops    as cr on f.crop_key   = cr.crop_key
+join warehouse.dim_years    as y  on f.year_key   = y.year_key
+order by y.year, c.county_code, cr.crop_name
+"""
 
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+@st.cache_resource
+def get_engine():
+    """One database connection pool for the whole app (read-only user)."""
+    url = URL.create(
+        drivername="postgresql+psycopg",
+        username=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"],
+        host=os.environ["POSTGRES_HOST"],
+        port=int(os.getenv("POSTGRES_PORT", "5432")),
+        database=os.environ["POSTGRES_DB"],
+        query={"sslmode": os.getenv("POSTGRES_SSLMODE", "prefer")},
+    )
+    return create_engine(url)
+
+
+@st.cache_data(ttl=3600)
+def load_crops() -> pd.DataFrame:
+    """Read the crop data once, then keep it cached for an hour."""
+    with get_engine().connect() as conn:
+        return pd.read_sql(text(CROPS_QUERY), conn)
 
 
 st.title("🌾 Crop Analytics – Jordbruksverket 1965–2025")
 
-response = requests.get(f"{BACKEND_URL}/crops", timeout=30)
-df = pd.DataFrame(response.json())
+df = load_crops()
 
 st.dataframe(df.fillna("saknas"))
 
