@@ -51,17 +51,14 @@ resource "azurerm_container_app_job" "pipeline" {
     name  = "db-admin-password"
     value = var.db_admin_password
   }
-
   secret {
     name  = "streamlit-reader-password"
     value = var.streamlit_reader_password
   }
-
   secret {
     name  = "chatbot-reader-password"
     value = var.chatbot_reader_password
   }
-
 
   registry {
     server               = azurerm_container_registry.acr.login_server
@@ -102,12 +99,10 @@ resource "azurerm_container_app_job" "pipeline" {
         name  = "POSTGRES_SSLMODE"
         value = "require"
       }
-
       env {
         name        = "STREAMLIT_READER_PASSWORD"
         secret_name = "streamlit-reader-password"
       }
-
       env {
         name        = "CHATBOT_READER_PASSWORD"
         secret_name = "chatbot-reader-password"
@@ -116,7 +111,7 @@ resource "azurerm_container_app_job" "pipeline" {
   }
 }
 
-# --- Frontend: Streamlit reads the warehouse as a read-only user ---
+# --- Frontend: Streamlit (dashboard + chatbot) reads Postgres as read-only users ---
 resource "azurerm_container_app" "frontend" {
   name                         = "frontend"
   container_app_environment_id = azurerm_container_app_environment.env.id
@@ -135,6 +130,10 @@ resource "azurerm_container_app" "frontend" {
   secret {
     name  = "chatbot-reader-password"
     value = var.chatbot_reader_password
+  }
+  secret {
+    name  = "gemini-api-key"
+    value = var.gemini_api_key
   }
 
   registry {
@@ -193,6 +192,18 @@ resource "azurerm_container_app" "frontend" {
       env {
         name        = "CHATBOT_DB_PASSWORD"
         secret_name = "chatbot-reader-password"
+      }
+      env {
+        name        = "GEMINI_API_KEY"
+        secret_name = "gemini-api-key"
+      }
+      env {
+        name  = "GEMINI_MODEL"
+        value = "gemini-3.5-flash"
+      }
+      env {
+        name  = "GEMINI_FALLBACK_MODEL"
+        value = "gemini-3.5-flash-lite"
       }
     }
   }
