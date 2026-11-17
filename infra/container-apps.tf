@@ -32,6 +32,7 @@ resource "azurerm_container_app_job" "pipeline" {
   name                         = "pipeline-dagster"
   location                     = var.location
   resource_group_name          = azurerm_resource_group.rg.name
+  workload_profile_name        = "Consumption"
   container_app_environment_id = azurerm_container_app_environment.env.id
   replica_timeout_in_seconds   = 1800 # stop after 30 minutes at most
   replica_retry_limit          = 0
@@ -50,6 +51,17 @@ resource "azurerm_container_app_job" "pipeline" {
     name  = "db-admin-password"
     value = var.db_admin_password
   }
+
+  secret {
+    name  = "streamlit-reader-password"
+    value = var.streamlit_reader_password
+  }
+
+  secret {
+    name  = "chatbot-reader-password"
+    value = var.chatbot_reader_password
+  }
+
 
   registry {
     server               = azurerm_container_registry.acr.login_server
@@ -90,6 +102,16 @@ resource "azurerm_container_app_job" "pipeline" {
         name  = "POSTGRES_SSLMODE"
         value = "require"
       }
+
+      env {
+        name        = "STREAMLIT_READER_PASSWORD"
+        secret_name = "streamlit-reader-password"
+      }
+
+      env {
+        name        = "CHATBOT_READER_PASSWORD"
+        secret_name = "chatbot-reader-password"
+      }
     }
   }
 }
@@ -99,6 +121,7 @@ resource "azurerm_container_app" "frontend" {
   name                         = "frontend"
   container_app_environment_id = azurerm_container_app_environment.env.id
   resource_group_name          = azurerm_resource_group.rg.name
+  workload_profile_name        = "Consumption"
   revision_mode                = "Single"
 
   secret {
@@ -106,7 +129,7 @@ resource "azurerm_container_app" "frontend" {
     value = azurerm_container_registry.acr.admin_password
   }
   secret {
-    name  = "streamlit_reader-password"
+    name  = "streamlit-reader-password"
     value = var.streamlit_reader_password
   }
   secret {
@@ -153,11 +176,11 @@ resource "azurerm_container_app" "frontend" {
       }
       env {
         name  = "POSTGRES_USER"
-        value = "app_reader"
+        value = "streamlit_reader"
       }
       env {
         name        = "POSTGRES_PASSWORD"
-        secret_name = "streamlit_reader-password"
+        secret_name = "streamlit-reader-password"
       }
       env {
         name  = "POSTGRES_SSLMODE"

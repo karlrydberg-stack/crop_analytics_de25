@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
-from urllib.parse import quote_plus
+#from urllib.parse import quote_plus converted extra characters into + and Postgres could not read it
+from urllib.parse import quote
 
 import dlt
 import pandas as pd
@@ -33,15 +34,20 @@ def load_crop_data():
 
 def run_pipeline():
 
-    # PostgreSQL connection string
+    # PostgreSQL connection string - removed "plus"
     connection_string = (
         f"postgresql://"
-        f"{quote_plus(os.getenv('POSTGRES_USER'))}:"
-        f"{quote_plus(os.getenv('POSTGRES_PASSWORD'))}@"
+        f"{quote(os.getenv('POSTGRES_USER'), safe='')}:"
+        f"{quote(os.getenv('POSTGRES_PASSWORD'), safe='')}@"
         f"{os.getenv('POSTGRES_HOST')}:"
         f"{os.getenv('POSTGRES_PORT')}/"
         f"{os.getenv('POSTGRES_DB')}"
+        f"?sslmode={os.getenv('POSTGRES_SSLMODE', 'prefer')}"
     )
+
+
+
+
 
     # Define dlt pipeline
     pipeline = dlt.pipeline(
