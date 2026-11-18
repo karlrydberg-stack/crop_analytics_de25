@@ -54,8 +54,7 @@ st.title("🌾 Crop Analytics – Jordbruksverket 1965–2025")
 
 df = load_crops()
 
-st.dataframe(df.fillna("saknas"))
-
+st.dataframe(df.astype("string").fillna("saknas"))
 
 st.markdown("---")
 st.caption(

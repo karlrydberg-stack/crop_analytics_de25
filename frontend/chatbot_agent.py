@@ -24,7 +24,7 @@ def create_chatbot_engine():
         host=os.environ["POSTGRES_HOST"],
         port=int(os.getenv("POSTGRES_PORT", "5432")),
         database=os.environ["POSTGRES_DB"],
-        query={"sslmode": os.getenv("POSTGRES_SSLMODE", "prefer")},
+        query={"sslmode": os.getenv("POSTGRES_SSLMODE", "prefer"), "connect_timeout": "10"},
     )
     return create_engine(url)
 
@@ -76,7 +76,9 @@ def build_agent() -> Agent[ChatDeps, str]:
         GoogleModel(os.getenv("GEMINI_MODEL", "gemini-3.5-flash"), provider=provider),
         GoogleModel(os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite"), provider=provider),
     )
-    agent = Agent(model, deps_type=ChatDeps, instructions=INSTRUCTIONS)
+    agent = Agent(model,deps_type=ChatDeps,instructions=INSTRUCTIONS,model_settings={"timeout": 30},
+    )
+    
 
     @agent.tool
     def run_sql(ctx: RunContext[ChatDeps], query: str) -> str:

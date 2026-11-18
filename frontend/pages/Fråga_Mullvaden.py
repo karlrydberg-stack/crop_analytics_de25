@@ -101,6 +101,8 @@ if question:
                 answer = "That question needed too many steps. Try asking it more simply."
             except FallbackExceptionGroup:
                 answer = "The language models are busy right now. Try again in a minute."
+            except Exception as exc:
+                answer = f"Something went wrong ({exc.__class__.__name__}). Try again in a minute."
             sql_used = deps.queries if "deps" in locals() else []
             
 
